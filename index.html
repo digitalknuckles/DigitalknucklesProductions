@@ -89,6 +89,72 @@
   </header>
   <div class="container">
     <!-- Your existing sections here... -->
+     <div class="container">
+    <div class="mint-section">
+      <h2>🚀 Interactive Minting</h2>
+      <p>Mint your exclusive DKP NFT directly to your wallet. Connect MetaMask and punch into the metaverse!</p>
+      <div class="mint-preview">
+        <img id="previewImage" src="https://ipfs.io/ipfs/QmPLACEHOLDERCID123" alt="Preview NFT" />
+      </div>
+      <button onclick="mintNFT()">Connect Wallet & Mint</button>
+    </div>
+
+ <script>
+    const CONTRACT_ADDRESS = "0x5002792C0423C08744bBb5045b53c2A26373113C";
+    const CID_ARRAY = ["QmCID1", "QmCID2", "QmCID3", "QmCID4", "QmCID5", "QmCID6"];
+    const ABI = [
+      "function mintArtifact(uint256 id) payable",
+      "function mintPrices(uint256) view returns (uint256)",
+      "function uri(uint256) view returns (string)"
+    ];
+
+    let frameIndex = 0;
+    let reelInterval = null;
+
+    function startReel() {
+      if (reelInterval) clearInterval(reelInterval);
+      reelInterval = setInterval(() => {
+        document.getElementById("previewImage").src = `https://ipfs.io/ipfs/${CID_ARRAY[frameIndex % CID_ARRAY.length]}`;
+        frameIndex++;
+      }, 83); // ~12fps
+    }
+
+    function stopReel(finalCID) {
+      clearInterval(reelInterval);
+      document.getElementById("previewImage").src = `https://ipfs.io/ipfs/${finalCID}`;
+    }
+
+    async function mintNFT() {
+      if (!window.ethereum) return alert("Please install MetaMask.");
+
+      try {
+        await ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        const tokenId = prompt("Enter Artifact ID to mint:");
+        if (!tokenId) return;
+
+        const price = await contract.mintPrices(tokenId);
+
+        startReel();
+
+        const tx = await contract.mintArtifact(tokenId, { value: price });
+        const receipt = await tx.wait();
+
+        const finalUri = await contract.uri(tokenId);
+        const cid = finalUri.replace("ipfs://", "").split("/")[0];
+
+        stopReel(cid);
+        alert("Mint successful! 🎉");
+      } catch (err) {
+        clearInterval(reelInterval);
+        console.error(err);
+        alert("Mint failed: " + (err.data?.message || err.message));
+      }
+    }
+  </script>
 
     <h2>🐦 Follow Us on X (Twitter)</h2>
     <div class="twitter-embed">
