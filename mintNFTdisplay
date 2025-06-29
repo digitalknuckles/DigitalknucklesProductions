@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DK Artifacts Mint</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .artifact-card {
+      background: #222;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid #333;
+    }
+
+    .artifact-card img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      background: #fbb03b;
+      color: #111;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #d4145a;
+      color: white;
+    }
+
+    .price {
+      margin: 0.5rem 0;
+      color: #0ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🥊 Mint DK Artifacts</h1>
+
+  <div class="grid">
+    <!-- Artifact #0 -->
+    <div class="artifact-card">
+      <img src="https://ipfs.io/ipfs/QmPlaceholderCID0" alt="Artifact 0" id="img0" />
+      <h2>Artifact #0</h2>
+      <p class="price" id="price0">Loading...</p>
+      <button onclick="mintArtifact(0)">Mint</button>
+    </div>
+
+    <!-- Artifact #1 -->
+    <div class="artifact-card">
+      <img src="https://ipfs.io/ipfs/QmPlaceholderCID1" alt="Artifact 1" id="img1" />
+      <h2>Artifact #1</h2>
+      <p class="price" id="price1">Loading...</p>
+      <button onclick="mintArtifact(1)">Mint</button>
+    </div>
+
+    <!-- Artifact #2 -->
+    <div class="artifact-card">
+      <img src="https://ipfs.io/ipfs/QmPlaceholderCID2" alt="Artifact 2" id="img2" />
+      <h2>Artifact #2</h2>
+      <p class="price" id="price2">Loading...</p>
+      <button onclick="mintArtifact(2)">Mint</button>
+    </div>
+  </div>
+
+  <script>
+    const CONTRACT_ADDRESS = "0x5002792C0423C08744bBb5045b53c2A26373113C"; // Your Proxy Address
+    const ABI = [
+      "function mintArtifact(uint256 id) payable",
+      "function mintPrices(uint256) view returns (uint256)",
+      "function uri(uint256) view returns (string)"
+    ];
+
+    async function loadPrices() {
+      if (!window.ethereum) return;
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+
+      for (let id = 0; id < 3; id++) {
+        try {
+          const price = await contract.mintPrices(id);
+          document.getElementById("price" + id).innerText = `${ethers.utils.formatEther(price)} MATIC`;
+
+          const uri = await contract.uri(id);
+          document.getElementById("img" + id).src = uri.replace(/^ipfs:\/\//, "https://ipfs.io/ipfs/");
+        } catch (err) {
+          document.getElementById("price" + id).innerText = "Unavailable";
+        }
+      }
+    }
+
+    async function mintArtifact(id) {
+      if (!window.ethereum) {
+        alert("Install MetaMask to mint.");
+        return;
+      }
+
+      try {
+        await ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        const price = await contract.mintPrices(id);
+        const tx = await contract.mintArtifact(id, { value: price });
+        alert(`Transaction sent: ${tx.hash}`);
+        await tx.wait();
+        alert("Mint successful!");
+      } catch (err) {
+        console.error(err);
+        alert("Mint failed: " + (err.data?.message || err.message));
+      }
+    }
+
+    window.onload = loadPrices;
+  </script>
+</body>
+</html>
