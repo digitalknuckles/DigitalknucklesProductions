@@ -193,63 +193,67 @@ document.addEventListener("DOMContentLoaded", () => {
       <button onclick="mintNFT()">Connect Wallet & Mint</button>
     </div>
 
- <script>
-    const CONTRACT_ADDRESS = "0x5002792C0423C08744bBb5045b53c2A26373113C";
-    const CID_ARRAY = ["QmCID1", "QmCID2", "QmCID3", "QmCID4", "QmCID5", "QmCID6"];
-    const ABI = [
-      "function mintArtifact(uint256 id) payable",
-      "function mintPrices(uint256) view returns (uint256)",
-      "function uri(uint256) view returns (string)"
-    ];
+<script>
+  const CONTRACT_ADDRESS = "0xE9b3660eA4a430507340360753c0ECb9B7991539"; // <- Use proxy address
+  const CID_ARRAY = [
+    "QmCID1", "QmCID2", "QmCID3", "QmCID4", "QmCID5", "QmCID6"
+  ];
 
-    let frameIndex = 0;
-    let reelInterval = null;
+  const ABI = [
+    "function mintArtifact(uint256 id) payable",
+    "function mintPrices(uint256) view returns (uint256)",
+    "function uri(uint256) view returns (string)"
+  ];
 
-    function startReel() {
-      if (reelInterval) clearInterval(reelInterval);
-      reelInterval = setInterval(() => {
-        document.getElementById("previewImage").src = `https://ipfs.io/ipfs/${CID_ARRAY[frameIndex % CID_ARRAY.length]}`;
-        frameIndex++;
-      }, 83); // ~12fps
-    }
+  let frameIndex = 0;
+  let reelInterval = null;
 
-    function stopReel(finalCID) {
+  function startReel() {
+    if (reelInterval) clearInterval(reelInterval);
+    reelInterval = setInterval(() => {
+      const frameCID = CID_ARRAY[frameIndex % CID_ARRAY.length];
+      document.getElementById("previewImage").src = `https://ipfs.io/ipfs/${frameCID}`;
+      frameIndex++;
+    }, 83); // ~12 fps
+  }
+
+  function stopReel(finalCID) {
+    clearInterval(reelInterval);
+    document.getElementById("previewImage").src = `https://ipfs.io/ipfs/${finalCID}`;
+  }
+
+  async function mintNFT() {
+    if (!window.ethereum) return alert("Please install MetaMask.");
+
+    try {
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+      const tokenId = prompt("Enter Artifact ID to mint:");
+      if (!tokenId) return;
+
+      const price = await contract.mintPrices(tokenId);
+
+      startReel();
+
+      const tx = await contract.mintArtifact(tokenId, { value: price });
+      const receipt = await tx.wait();
+
+      const finalUri = await contract.uri(tokenId);
+      const finalCID = finalUri.replace("ipfs://", "").split("/")[0];
+
+      stopReel(finalCID);
+      alert("✅ Mint successful!");
+    } catch (err) {
       clearInterval(reelInterval);
-      document.getElementById("previewImage").src = `https://ipfs.io/ipfs/${finalCID}`;
+      console.error(err);
+      alert("❌ Mint failed: " + (err.data?.message || err.message));
     }
-
-    async function mintNFT() {
-      if (!window.ethereum) return alert("Please install MetaMask.");
-
-      try {
-        await ethereum.request({ method: 'eth_requestAccounts' });
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-        const tokenId = prompt("Enter Artifact ID to mint:");
-        if (!tokenId) return;
-
-        const price = await contract.mintPrices(tokenId);
-
-        startReel();
-
-        const tx = await contract.mintArtifact(tokenId, { value: price });
-        const receipt = await tx.wait();
-
-        const finalUri = await contract.uri(tokenId);
-        const cid = finalUri.replace("ipfs://", "").split("/")[0];
-
-        stopReel(cid);
-        alert("Mint successful! 🎉");
-      } catch (err) {
-        clearInterval(reelInterval);
-        console.error(err);
-        alert("Mint failed: " + (err.data?.message || err.message));
-      }
-    }
-  </script>
-
+  }
+</script>
     <h2>🐦 Follow Us on X (Twitter)</h2>
     <div class="twitter-embed">
       <a class="twitter-timeline" data-height="600" href="https://x.com/digitalknuckles">Tweets by @Digitalknuckles</a>
