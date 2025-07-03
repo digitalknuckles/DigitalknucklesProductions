@@ -89,9 +89,9 @@
   <script type="module">
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 
-const nftAddress = "0xe9b3660ea4a430507340360753c0ecb9b7991539";
+const nftAddress = "0xca204bf3de9bacc7a86585b4504f2886887b328b";https:
 const nftABI = ["function balanceOf(address account, uint256 id) view returns (uint256)"];
-const tokenId = 0;
+const tokenId = 1;
 const signatureMessage = "Sign this message to verify access to Digitalknuckles Portfolio.";
 
 function createAccessModal() {
@@ -134,14 +134,14 @@ async function verifyWalletAccess(statusEl) {
     if (balance.toNumber() > 0) {
       const signature = await signer.signMessage(signatureMessage);
       if (signature) {
-        sessionStorage.setItem("FARTS_verified", "true");
+        sessionStorage.setItem("GMC_verified", "true");
         return true;
       }
     } else {
-      statusEl.textContent = "You don’t own the required NFT. Redirecting to minting page...";
+      statusEl.textContent = "You need a Groupies Meme Coin... Redirecting to minting page...";
       // ⏳ Wait a moment, then redirect
       setTimeout(() => {
-        window.location.href = "https://opensea.io/item/matic/0xe9b3660ea4a430507340360753c0ecb9b7991539/0";
+        window.location.href = "https://opensea.io/item/matic/0xca204bf3de9bacc7a86585b4504f2886887b328b/1";
       }, 3000);
     }
   } catch (err) {
@@ -159,7 +159,7 @@ function showSiteContent() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (sessionStorage.getItem("FARTS_verified") === "true") {
+  if (sessionStorage.getItem("GMC_verified") === "true") {
     showSiteContent();
     return;
   }
